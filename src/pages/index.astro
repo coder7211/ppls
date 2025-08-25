@@ -1,6 +1,5 @@
 ---
 // index.astro
-// Basic responsive landing page
 ---
 
 <html lang="en">
@@ -16,20 +15,44 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #ffffff; /* You can change this later */
+        background-color: #ffffff;
         font-family: "Futura BT", Arial, sans-serif;
+        text-align: center;
+        padding: 1rem;
       }
 
       h1 {
-        font-size: clamp(2rem, 5vw, 5rem); /* responsive scaling */
+        font-size: clamp(2.5rem, 6vw, 5rem); /* big and responsive */
         font-weight: bold;
-        text-align: center;
         margin: 0;
         color: #000000;
+      }
+
+      h2 {
+        font-size: clamp(1.2rem, 3vw, 2rem); /* smaller under Brand Rapid */
+        font-weight: 500;
+        margin: 0.5rem 0 1rem 0;
+        color: #333333;
+      }
+
+      p {
+        font-size: clamp(1rem, 2vw, 1.25rem);
+        line-height: 1.5;
+        max-width: 700px;
+        margin: 0 auto;
+        color: #555555;
       }
     </style>
   </head>
   <body>
-    <h1>Brand Rapid</h1>
+    <div>
+      <h1>Brand Rapid</h1>
+      <h2>Marketing</h2>
+      <p>
+        BrandRapid is a forward-thinking digital marketing agency that elevates
+        brands using innovative advertising solutions, committed to driving
+        growth and engagement for every client.
+      </p>
+    </div>
   </body>
 </html>

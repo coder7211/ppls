@@ -1,57 +1,330 @@
 ---
-import "../styles/global.css"
+// index.astro
+// Reactive "fish tank" hero with water filling bottom 25% of the section.
+// Contact section below. Pure HTML/CSS/JS—no external libs.
 ---
 
-<!-- Hero Section -->
-<section class="min-h-screen flex flex-col items-center justify-center text-center bg-gradient-to-b from-white to-gray-50 px-4">
-  <h1 class="text-5xl md:text-7xl font-bold" style="font-family: 'Futura BT', sans-serif;">
-    Brand Rapid
-  </h1>
-  <h2 class="text-xl md:text-2xl mt-2 text-gray-600">Marketing</h2>
-  <p class="mt-4 max-w-2xl text-gray-700 text-base md:text-lg leading-relaxed">
-    BrandRapid is a forward-thinking digital marketing agency that elevates brands using innovative advertising solutions, committed to driving growth and engagement for every client.
-  </p>
-</section>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brand Rapid</title>
+    <style>
+      :root{
+        --bg: #0f172a;        /* page backdrop (slate-900) */
+        --glass: #1f2937;     /* tank walls */
+        --waterTop: #38bdf8;  /* light water */
+        --waterMid: #0ea5e9;  /* mid water */
+        --waterBot: #0284c7;  /* deep water */
+        --textMain:#e5e7eb;   /* light text */
+        --textSub:#cbd5e1;    /* subtler text */
+        --accent:#111827;     /* contact button */
+      }
 
-<!-- Divider Line -->
-<hr class="border-gray-300 my-12 w-3/4 mx-auto">
+      * { box-sizing: border-box; }
 
-<!-- Contact Section (restoring Netlify's form) -->
-<section class="py-16 px-6 bg-white text-center">
-  <h2 class="text-3xl font-semibold mb-6">Contact Us</h2>
-  <p class="text-gray-600 mb-8">We’d love to hear from you. Fill out the form below and we’ll get back to you shortly.</p>
+      body{
+        margin:0;
+        font-family: "Futura BT", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--textMain);
+      }
 
-  <form name="contact" method="POST" data-netlify="true" class="max-w-xl mx-auto space-y-4">
-    <input type="hidden" name="form-name" value="contact">
+      /* ====== TANK (Hero) ====== */
+      .tank {
+        position: relative;
+        width: 100%;
+        min-height: 60vh;            /* hero height */
+        display: grid;
+        place-items: center;
+        padding: clamp(24px, 5vw, 48px);
+        overflow: hidden;
+        /* a subtle top-to-bottom glow */
+        background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.1));
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+      }
 
-    <input 
-      type="text" 
-      name="name" 
-      placeholder="Your Name" 
-      class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      required
-    />
+      /* Glass frame look */
+      .tank::before, .tank::after{
+        content:"";
+        position:absolute;
+        left:0; right:0;
+        pointer-events:none;
+      }
+      .tank::before{
+        top:0;
+        height:10px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0));
+      }
+      .tank::after{
+        bottom:0;
+        height:10px;
+        background: linear-gradient(0deg, rgba(255,255,255,0.12), rgba(255,255,255,0));
+      }
 
-    <input 
-      type="email" 
-      name="email" 
-      placeholder="Your Email" 
-      class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      required
-    />
+      /* Headings over the tank */
+      .tank-content{
+        position: relative;
+        z-index: 2;   /* above canvas water */
+        text-align:center;
+        max-width: 900px;
+        padding-inline: 12px;
+      }
+      .brand{
+        font-weight: 800;
+        letter-spacing: .02em;
+        font-size: clamp(32px, 7vw, 72px);
+        margin: 0 0 .1em 0;
+        text-shadow: 0 1px 0 rgba(255,255,255,0.04);
+      }
+      .tag{
+        margin: 0 0 .75rem 0;
+        font-size: clamp(16px, 2.5vw, 24px);
+        color: var(--textSub);
+        font-weight: 500;
+      }
+      .mission{
+        margin: 0 auto;
+        color: var(--textSub);
+        max-width: 60ch;
+        font-size: clamp(14px, 2.2vw, 18px);
+        line-height: 1.6;
+      }
 
-    <textarea 
-      name="message" 
-      rows="5" 
-      placeholder="Your Message" 
-      class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      required
-    ></textarea>
+      /* Canvas covers the tank area */
+      .water-canvas{
+        position:absolute;
+        inset:0;       /* full-bleed inside tank */
+        z-index:1;     /* behind text */
+        display:block;
+      }
 
-    <button 
-      type="submit" 
-      class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition">
-      Send Message
-    </button>
-  </form>
-</section>
+      /* Divider line between sections */
+      .divider{
+        width: min(90%, 1000px);
+        margin: 40px auto;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+      }
+
+      /* ====== CONTACT SECTION ====== */
+      .contact-wrap{
+        width: min(92%, 1000px);
+        margin: 0 auto 80px;
+        padding: clamp(24px, 4vw, 48px);
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        backdrop-filter: blur(6px);
+      }
+      .contact-wrap h2{
+        margin: 0 0 .5rem 0;
+        font-size: clamp(22px, 3.5vw, 32px);
+      }
+      .contact-wrap p.lead{
+        margin: 0 0 1.5rem 0;
+        color: var(--textSub);
+      }
+      form{
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr;
+      }
+      input, textarea{
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.16);
+        background: rgba(255,255,255,0.06);
+        color: var(--textMain);
+        outline: none;
+      }
+      input::placeholder, textarea::placeholder{
+        color: rgba(255,255,255,0.5);
+      }
+      textarea{ resize: vertical; min-height: 120px; }
+      button{
+        padding: 12px 16px;
+        border: none;
+        border-radius: 10px;
+        background: #22c55e; /* green accent */
+        color: #0b111b;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform .06s ease, filter .2s ease;
+      }
+      button:hover{ filter: brightness(.95); }
+      button:active{ transform: translateY(1px); }
+
+      @media (min-width: 720px){
+        form{
+          grid-template-columns: 1fr 1fr;
+        }
+        textarea{
+          grid-column: 1/-1;
+        }
+        button{
+          grid-column: 1/-1;
+          justify-self: start;
+          min-width: 180px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- ===== HERO / TANK ===== -->
+    <section class="tank" id="tank">
+      <!-- Water canvas (interactive) -->
+      <canvas class="water-canvas" id="water"></canvas>
+
+      <!-- Text overlay -->
+      <div class="tank-content" aria-label="Brand intro">
+        <h1 class="brand">Brand Rapid</h1>
+        <h2 class="tag">Marketing</h2>
+        <p class="mission">
+          BrandRapid is a forward-thinking digital marketing agency that elevates
+          brands using innovative advertising solutions, committed to driving
+          growth and engagement for every client.
+        </p>
+      </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="divider" role="separator" aria-hidden="true"></div>
+
+    <!-- ===== CONTACT ===== -->
+    <section class="contact-wrap" id="contact">
+      <h2>Contact Us</h2>
+      <p class="lead">We’d love to hear from you. Fill out the form and we’ll get back to you shortly.</p>
+      <!-- Netlify form (works out of the box on Netlify) -->
+      <form name="contact" method="POST" data-netlify="true">
+        <input type="hidden" name="form-name" value="contact" />
+        <input name="name" type="text" placeholder="Your Name" required />
+        <input name="email" type="email" placeholder="Your Email" required />
+        <textarea name="message" placeholder="Your Message" required></textarea>
+        <button type="submit">Send Message</button>
+      </form>
+    </section>
+
+    <script>
+      // ===== Reactive Water (canvas) =====
+      (function(){
+        const canvas = document.getElementById('water');
+        const ctx = canvas.getContext('2d', { alpha: true });
+
+        let w = 0, h = 0, dpr = Math.max(1, window.devicePixelRatio || 1);
+        let t = 0;
+        let mouseX = null; // mouse x in pixels within tank
+        let mouseInside = false;
+
+        const tankEl = document.getElementById('tank');
+
+        function resize(){
+          const rect = tankEl.getBoundingClientRect();
+          w = Math.max(320, Math.floor(rect.width));
+          h = Math.max(260, Math.floor(rect.height));
+          canvas.width  = Math.floor(w * dpr);
+          canvas.height = Math.floor(h * dpr);
+          canvas.style.width  = w + 'px';
+          canvas.style.height = h + 'px';
+          ctx.setTransform(dpr,0,0,dpr,0,0);
+        }
+
+        // Simple multi-sine wave + local mouse bump
+        function waveY(xNorm, time){
+          // xNorm in [0,1]
+          const baseFill = 0.25; // 25% of tank height filled
+          const waterLevel = 1.0 - baseFill; // normalized baseline from top
+          // two gentle waves
+          const a1 = 0.02, f1 = 2.0, s1 = time * 0.8;
+          const a2 = 0.015, f2 = 3.6, s2 = time * 1.3;
+
+          let y = waterLevel
+                  + a1 * Math.sin((xNorm * Math.PI * f1) + s1)
+                  + a2 * Math.sin((xNorm * Math.PI * f2) - s2);
+
+          // mouse bump (gaussian) that ripples
+          if(mouseInside && mouseX !== null){
+            const mx = mouseX / w;          // normalized mouse x
+            const dist = xNorm - mx;
+            const sigma = 0.08;             // bump width
+            const gauss = Math.exp(-(dist*dist)/(2*sigma*sigma));
+            const bump = gauss * 0.035 * Math.sin(time * 2.8);
+            y -= bump; // raise the wave crest locally
+          }
+          return y;
+        }
+
+        function draw(time){
+          t = time * 0.001; // seconds
+
+          ctx.clearRect(0,0,w,h);
+
+          // Build wave path (top surface of water)
+          ctx.beginPath();
+          const steps = Math.max(120, Math.floor(w / 6));
+          for(let i=0;i<=steps;i++){
+            const x = (i/steps) * w;
+            const yNorm = waveY(i/steps, t);
+            const y = yNorm * h;
+            if(i===0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+
+          // Close shape to bottom (to fill water)
+          ctx.lineTo(w, h);
+          ctx.lineTo(0, h);
+          ctx.closePath();
+
+          // Water gradient
+          const g = ctx.createLinearGradient(0, h*0.75, 0, h*0.45);
+          g.addColorStop(0, 'rgba(2,132,199,0.90)');  // var(--waterBot)
+          g.addColorStop(0.6, 'rgba(14,165,233,0.88)'); // var(--waterMid)
+          g.addColorStop(1, 'rgba(56,189,248,0.85)'); // var(--waterTop)
+          ctx.fillStyle = g;
+          ctx.fill();
+
+          // Light sheen on the surface
+          ctx.save();
+          ctx.globalAlpha = 0.18;
+          ctx.strokeStyle = 'white';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          for(let i=0;i<=steps;i++){
+            const x = (i/steps) * w;
+            const yNorm = waveY(i/steps, t) - 0.006;
+            const y = yNorm * h;
+            if(i===0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+          ctx.restore();
+
+          requestAnimationFrame(draw);
+        }
+
+        // Track mouse within tank
+        function handleMove(e){
+          const rect = tankEl.getBoundingClientRect();
+          mouseX = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+          mouseInside = mouseX >= 0 && mouseX <= rect.width;
+        }
+        function handleEnter(){ mouseInside = true; }
+        function handleLeave(){ mouseInside = false; mouseX = null; }
+
+        window.addEventListener('resize', resize, { passive: true });
+        tankEl.addEventListener('mousemove', handleMove, { passive: true });
+        tankEl.addEventListener('touchmove', handleMove, { passive: true });
+        tankEl.addEventListener('mouseenter', handleEnter, { passive: true });
+        tankEl.addEventListener('mouseleave', handleLeave, { passive: true });
+        tankEl.addEventListener('touchstart', handleEnter, { passive: true });
+        tankEl.addEventListener('touchend', handleLeave, { passive: true });
+
+        resize();
+        requestAnimationFrame(draw);
+      })();
+    </script>
+  </body>
+</html>

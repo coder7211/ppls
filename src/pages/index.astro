@@ -1,359 +1,85 @@
----
---- 
-<!-- index.astro
-     Reactive water tank with:
-       - mouse/touch ripples & splash particles on click/tap
-       - custom "wave" cursor when hovering the tank (desktop)
-     Safe to paste as a full replacement for your existing page.
--->
+<canvas id="fishTank"></canvas>
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>BrandRapid</title>
-    <style>
-      :root{
-        --bg:#0f172a; --text:#e6eef6; --muted:#9fb0c8; --accent:#22c55e;
-      }
-      *{box-sizing:border-box}
-      body{
-        margin:0;
-        font-family: "Futura BT", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
-      }
+<script>
+const canvas = document.getElementById("fishTank");
+const ctx = canvas.getContext("2d");
 
-      /* Tank area */
-      .tank {
-        position: relative;
-        width:100%;
-        min-height: 60vh;
-        display:grid;
-        place-items:center;
-        padding: clamp(20px, 5vw, 48px);
-        overflow: hidden;
-      }
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-      /* Canvas covers tank */
-      canvas#water {
-        position:absolute;
-        inset:0;
-        width:100%;
-        height:100%;
-        z-index:1;
-      }
+let ripples = [];
+let waterHeight = canvas.height * 0.25; // bottom 1/4 is water
 
-      /* Overlay text */
-      .tank-content {
-        position:relative;
-        z-index:3;
-        text-align:center;
-        max-width: 900px;
-        padding: 0 1rem;
-      }
-      .brand {
-        font-size: clamp(28px, 6.5vw, 64px);
-        font-weight:800;
-        margin:0 0 .1rem 0;
-        color: var(--text);
-      }
-      .tag {
-        font-size: clamp(14px, 2.5vw, 20px);
-        color: var(--muted);
-        margin: 0 0 1rem 0;
-      }
-      .mission {
-        color: var(--muted);
-        max-width:60ch;
-        margin: 0 auto;
-        font-size: clamp(14px, 2vw, 18px);
-        line-height:1.6;
-      }
+class Ripple {
+  constructor(x, y, delay = 0, speed = 2, lineWidth = 2) {
+    this.x = x;
+    this.y = y;
+    this.radius = 0;
+    this.alpha = 1;
+    this.delay = delay;
+    this.speed = speed;
+    this.lineWidth = lineWidth;
+  }
 
-      /* divider */
-      .divider{
-        width: min(92%, 1000px);
-        height:1px;
-        margin: 36px auto;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-      }
+  draw() {
+    if (this.delay > 0) return;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255, 255, 255, ${this.alpha})`;
+    ctx.lineWidth = this.lineWidth;
+    ctx.stroke();
+    ctx.closePath();
+  }
 
-      /* Contact card */
-      .contact-wrap{
-        width: min(92%, 1000px);
-        margin: 0 auto 80px;
-        padding: clamp(20px, 4vw, 40px);
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.06);
-        border-radius: 14px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        backdrop-filter: blur(6px);
-      }
-      .contact-wrap h2{ margin:0 0 .5rem 0; font-size: clamp(20px, 3.2vw, 28px); }
-      .contact-wrap p.lead { color: var(--muted); margin:0 0 1rem 0; }
+  update() {
+    if (this.delay > 0) {
+      this.delay--;
+      return;
+    }
+    this.radius += this.speed;
+    this.alpha -= 0.01;
+  }
+}
 
-      form { display:grid; gap:12px; }
-      input, textarea{
-        padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08);
-        background: rgba(255,255,255,0.02); color: var(--text); outline:none;
-      }
-      textarea{ min-height:120px; resize:vertical; }
-      button{
-        padding:12px 16px; border-radius:10px; border:none;
-        background: var(--accent); color: #041017; font-weight:700; cursor:pointer;
-      }
+function drawWater() {
+  ctx.fillStyle = "#0066cc";
+  ctx.fillRect(0, canvas.height - waterHeight, canvas.width, waterHeight);
+}
 
-      /* Custom cursor: data-URI SVG wave (fallback pointer) */
-      .tank.custom-cursor {
-        cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'><path fill='%23111' d='M2 12c3-3 5-3 8 0 3-3 5-3 8 0v8H2z' opacity='0.95'/></svg>") 12 12, auto;
-      }
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawWater();
 
-      /* On small devices the cursor change is irrelevant; no harm */
-      @media (max-width:720px){
-        .tank.custom-cursor { cursor: auto; }
-      }
-    </style>
-  </head>
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    let r = ripples[i];
+    r.update();
+    r.draw();
+    if (r.alpha <= 0) {
+      ripples.splice(i, 1);
+    }
+  }
 
-  <body>
-    <!-- HERO / TANK -->
-    <section id="tank" class="tank">
-      <canvas id="water" aria-hidden="true"></canvas>
+  requestAnimationFrame(animate);
+}
 
-      <div class="tank-content" aria-label="Brand intro">
-        <h1 class="brand">BrandRapid</h1>
-        <h2 class="tag">Marketing</h2>
-        <p class="mission">
-          BrandRapid is a forward-thinking digital marketing agency that elevates brands using innovative advertising solutions, committed to driving growth and engagement for every client.
-        </p>
-      </div>
-    </section>
+// Add realistic splash
+canvas.addEventListener("click", (e) => {
+  if (e.clientY > canvas.height - waterHeight) {
+    // Impact ripple (fast + bold)
+    ripples.push(new Ripple(e.clientX, e.clientY, 0, 3, 3));
+    // Secondary ripples (delayed + thinner)
+    ripples.push(new Ripple(e.clientX, e.clientY, 10, 2, 2));
+    ripples.push(new Ripple(e.clientX, e.clientY, 20, 2, 1));
+    ripples.push(new Ripple(e.clientX, e.clientY, 30, 1.5, 1));
+  }
+});
 
-    <!-- Divider -->
-    <div class="divider" role="separator" aria-hidden="true"></div>
+// Resize handling
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  waterHeight = canvas.height * 0.25;
+});
 
-    <!-- CONTACT (Netlify form) -->
-    <section class="contact-wrap" id="contact">
-      <h2>Contact Us</h2>
-      <p class="lead">We’d love to hear from you. Fill out the form and we’ll get back to you shortly.</p>
-      <form name="contact" method="POST" data-netlify="true">
-        <input type="hidden" name="form-name" value="contact" />
-        <input name="name" type="text" placeholder="Your Name" required />
-        <input name="email" type="email" placeholder="Your Email" required />
-        <textarea name="message" placeholder="Your Message" required></textarea>
-        <button type="submit">Send Message</button>
-      </form>
-    </section>
-
-    <script>
-      // ===== Water canvas with click/tap splash + custom cursor activation =====
-      (function(){
-        const canvas = document.getElementById('water');
-        const ctx = canvas.getContext('2d', { alpha: true });
-
-        const tank = document.getElementById('tank');
-        // enable custom cursor class on desktop
-        function enableCursor() {
-          tank.classList.add('custom-cursor');
-        }
-        function disableCursor() {
-          tank.classList.remove('custom-cursor');
-        }
-        // Enable cursor on pointer-capable devices
-        if(window.matchMedia('(hover: hover) and (pointer: fine)').matches){
-          enableCursor();
-        }
-
-        let DPR = Math.max(1, window.devicePixelRatio || 1);
-        let W = 0, H = 0;
-        let time = 0;
-
-        // Wave params
-        const baseFill = 0.25; // fraction of tank height filled (25%)
-        let mouseX = null, mouseY = null, mouseInside = false;
-
-        // Splash particles list
-        const particles = [];
-
-        // Resize canvas to match tank size
-        function resize(){
-          const rect = tank.getBoundingClientRect();
-          W = Math.max(320, Math.floor(rect.width));
-          H = Math.max(260, Math.floor(rect.height));
-          canvas.width = Math.floor(W * DPR);
-          canvas.height = Math.floor(H * DPR);
-          canvas.style.width = W + 'px';
-          canvas.style.height = H + 'px';
-          ctx.setTransform(DPR,0,0,DPR,0,0);
-        }
-
-        // simple wave function with time and optional local bump
-        function waveY(xNorm, t){
-          const waterLevel = 1 - baseFill;
-          // layered sine waves
-          const y =
-            waterLevel
-            + 0.02 * Math.sin(xNorm * Math.PI * 2.0 + t * 0.8)
-            + 0.012 * Math.sin(xNorm * Math.PI * 3.8 - t * 1.1);
-
-          // mouse bump
-          if(mouseInside && mouseX != null){
-            const mx = mouseX / W;
-            const d = xNorm - mx;
-            const sigma = 0.08;
-            const gauss = Math.exp(-(d*d)/(2*sigma*sigma));
-            const bump = gauss * 0.04 * Math.sin(t * 3.2);
-            return y - bump;
-          }
-          return y;
-        }
-
-        // Particle constructor for splash droplets
-        function createParticle(x, y){
-          // x,y are canvas (pixel) coords
-          const angle = (Math.random() * Math.PI) - Math.PI/2 - 0.3; // upward bias
-          const speed = 1.8 + Math.random() * 2.2;
-          const vx = Math.cos(angle) * speed;
-          const vy = Math.sin(angle) * speed * -1.0; // negative to go up
-          const life = 800 + Math.random()*500; // ms
-          const size = 2 + Math.random()*3;
-          particles.push({x, y, vx, vy, life, born: performance.now(), size, alpha:1});
-        }
-
-        // Trigger splash: ripples + particles
-        function triggerSplash(clientX, clientY){
-          const rect = tank.getBoundingClientRect();
-          // local coords
-          const x = clientX - rect.left;
-          const y = clientY - rect.top;
-          // create multiple particles
-          const count = 8 + Math.floor(Math.random()*8);
-          for(let i=0;i<count;i++){
-            createParticle(x, y);
-          }
-
-          // Minor temporary bump (we model it by setting mouseX & a short timeout)
-          mouseX = x;
-          mouseInside = true;
-          // clear bump after 600ms to let wave settle
-          setTimeout(()=> { mouseInside = false; mouseX = null; }, 600);
-        }
-
-        // Animation loop
-        let last = performance.now();
-        function draw(now){
-          const dt = now - last;
-          last = now;
-          time = now * 0.001;
-
-          ctx.clearRect(0,0,W,H);
-
-          // Build top surface path
-          ctx.beginPath();
-          const steps = Math.max(120, Math.floor(W / 6));
-          for(let i=0;i<=steps;i++){
-            const x = (i/steps) * W;
-            const yNorm = waveY(i/steps, time);
-            const y = yNorm * H;
-            if(i===0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-          }
-          // close and fill bottom area
-          ctx.lineTo(W, H);
-          ctx.lineTo(0, H);
-          ctx.closePath();
-
-          // gradient
-          const g = ctx.createLinearGradient(0, H*0.4, 0, H);
-          g.addColorStop(0, 'rgba(56,189,248,0.86)');
-          g.addColorStop(0.6, 'rgba(14,165,233,0.88)');
-          g.addColorStop(1, 'rgba(2,132,199,0.95)');
-          ctx.fillStyle = g;
-          ctx.fill();
-
-          // sheen stroke
-          ctx.save();
-          ctx.globalAlpha = 0.18;
-          ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-          ctx.lineWidth = 1.2;
-          ctx.beginPath();
-          for(let i=0;i<=steps;i++){
-            const x = (i/steps) * W;
-            const yNorm = waveY(i/steps, time) - 0.006;
-            const y = yNorm * H;
-            if(i===0) ctx.moveTo(x,y);
-            else ctx.lineTo(x,y);
-          }
-          ctx.stroke();
-          ctx.restore();
-
-          // update + draw particles
-          const nowMs = performance.now();
-          for(let i = particles.length -1; i >= 0; i--){
-            const p = particles[i];
-            const age = nowMs - p.born;
-            if(age >= p.life || p.alpha <= 0.02){
-              particles.splice(i,1);
-              continue;
-            }
-            // simple physics
-            // gravity affects vy
-            p.vy += 0.045 * (dt/16); 
-            p.x += p.vx * (dt/16) * 0.8;
-            p.y += p.vy * (dt/16) * 0.8;
-            // fade
-            p.alpha = 1 - (age / p.life);
-            // draw
-            ctx.save();
-            ctx.globalAlpha = p.alpha;
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.beginPath();
-            ctx.ellipse(p.x, p.y, p.size, p.size*0.8, 0, 0, Math.PI*2);
-            ctx.fill();
-            ctx.restore();
-          }
-
-          requestAnimationFrame(draw);
-        }
-
-        // Input handlers
-        function onPointerMove(e){
-          const rect = tank.getBoundingClientRect();
-          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-          mouseX = clientX - rect.left;
-          // we keep mouseInside true while moving inside
-          mouseInside = true;
-        }
-        function onPointerEnter(){ mouseInside = true; }
-        function onPointerLeave(){ mouseInside = false; mouseX = null; }
-
-        function onPointerDown(e){
-          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-          triggerSplash(clientX, clientY);
-        }
-
-        // Wire events
-        tank.addEventListener('mousemove', onPointerMove, { passive:true });
-        tank.addEventListener('touchmove', onPointerMove, { passive:true });
-        tank.addEventListener('mouseenter', onPointerEnter, { passive:true });
-        tank.addEventListener('mouseleave', onPointerLeave, { passive:true });
-
-        // click / tap -> splash
-        tank.addEventListener('mousedown', onPointerDown, { passive:true });
-        tank.addEventListener('touchstart', function(e){
-          // use first touch point
-          onPointerDown(e);
-        }, { passive:true });
-
-        window.addEventListener('resize', resize, { passive:true });
-
-        // Init
-        resize();
-        requestAnimationFrame(draw);
-      })();
-    </script>
-  </body>
-</html>
+animate();
+</script>

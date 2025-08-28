@@ -76,7 +76,7 @@
       .custom-section {
         width: 100%;
         padding: clamp(40px, 6vw, 80px) 5%;
-        background: var(--bg); /* matches body */
+        background: var(--bg);
         color: var(--text);
       }
       .section-content {
@@ -215,7 +215,7 @@
       </form>
     </section>
 
-    <!-- Water animation script -->
+    <!-- Integrated Water + Bubbles Animation -->
     <script>
       (function(){
         const canvas = document.getElementById('water');
@@ -224,7 +224,7 @@
         let DPR = Math.max(1, window.devicePixelRatio || 1);
         let W=0,H=0,last=performance.now(),time=0;
         const baseFill = 0.25;
-        let mouseX=null,mouseInside=false,particles=[];
+        let mouseX=null,mouseInside=false,particles=[],bubbles=[];
 
         function resize(){
           const rect = tank.getBoundingClientRect();
@@ -267,10 +267,20 @@
           setTimeout(()=>{mouseInside=false; mouseX=null;},600);
         }
 
+        function createBubble(){
+          const x = Math.random()*W;
+          const y = H*(1-baseFill) + Math.random()*H*baseFill*0.8; // bottom 1/4
+          const radius = 2+Math.random()*4;
+          const speed = 0.3+Math.random()*0.6;
+          const sway = (Math.random()*0.3)-0.15;
+          bubbles.push({x,y,radius,speed,sway,alpha:0.6+Math.random()*0.2});
+        }
+
         function draw(now){
           const dt=now-last; last=now; time=now*0.001;
           ctx.clearRect(0,0,W,H);
 
+          // Water
           const steps=Math.max(120,Math.floor(W/6));
           ctx.beginPath();
           for(let i=0;i<=steps;i++){
@@ -296,6 +306,8 @@
           ctx.stroke(); ctx.restore();
 
           const nowMs=performance.now();
+
+          // Particles
           for(let i=particles.length-1;i>=0;i--){
             const p=particles[i];
             const age=nowMs-p.born;
@@ -304,6 +316,18 @@
             p.alpha=1-(age/p.life);
             ctx.save(); ctx.globalAlpha=p.alpha; ctx.fillStyle='rgba(255,255,255,0.95)';
             ctx.beginPath(); ctx.ellipse(p.x,p.y,p.size,p.size*0.7,0,0,Math.PI*2); ctx.fill(); ctx.restore();
+          }
+
+          // Bubbles
+          if(bubbles.length<35 && Math.random()<0.03) createBubble();
+          for(let i=bubbles.length-1;i>=0;i--){
+            const b=bubbles[i];
+            b.y -= b.speed*(dt/16);
+            b.x += b.sway*(dt/16);
+            b.alpha -= 0.0005*(dt/16);
+            if(b.y<0 || b.alpha<=0){ bubbles.splice(i,1); continue; }
+            ctx.save(); ctx.globalAlpha=b.alpha; ctx.fillStyle='rgba(255,255,255,0.35)';
+            ctx.beginPath(); ctx.arc(b.x,b.y,b.radius,0,Math.PI*2); ctx.fill(); ctx.restore();
           }
 
           requestAnimationFrame(draw);

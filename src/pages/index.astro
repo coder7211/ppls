@@ -1,361 +1,414 @@
 ---
 ---
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>BrandRapid</title>
-    <style>
-      :root{
-        --bg:#0f172a; --text:#e6eef6; --muted:#9fb0c8; --accent:#22c55e;
-      }
-      *{box-sizing:border-box}
-      body{
-        margin:0;
-        font-family: "Futura BT", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
-      }
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BrandRapid</title>
+  <style>
+    :root{
+      --bg:#0f172a; --text:#e6eef6; --muted:#9fb0c8; --accent:#22c55e;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Futura BT", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
 
-      /* TANK (HERO) */
-      .tank {
-        position: relative;
-        width:100%;
-        min-height: 60vh;
-        display:grid;
-        place-items:center;
-        padding: clamp(20px, 5vw, 48px);
-        overflow: hidden;
-      }
+    /* HERO / TANK */
+    .tank {
+      position: relative;
+      width:100%;
+      min-height: 60vh;
+      display:grid;
+      place-items:center;
+      padding: clamp(20px, 5vw, 48px);
+      overflow: hidden;
+    }
+    canvas#water {
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      z-index:1;
+      display:block;
+    }
+    .tank-content {
+      position:relative;
+      z-index:3;
+      text-align:center;
+      max-width:900px;
+      padding:0 1rem;
+    }
+    .brand {
+      font-size: clamp(28px,6.5vw,64px);
+      font-weight:800;
+      margin:0 0 .08rem 0;
+      color: var(--text);
+    }
+    .tag {
+      font-size: clamp(14px,2.5vw,20px);
+      color: var(--muted);
+      margin:0 0 1rem 0;
+    }
+    .mission {
+      color: var(--muted);
+      max-width:60ch;
+      margin: 0 auto;
+      font-size: clamp(14px,2vw,18px);
+      line-height:1.6;
+    }
 
-      canvas#water {
-        position:absolute;
-        inset:0;
-        width:100%;
-        height:100%;
-        z-index:1;
-        display:block;
-      }
+    /* Divider */
+    .divider{
+      width: min(92%, 1000px);
+      height:1px;
+      margin: 36px auto;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    }
 
-      .tank-content {
-        position:relative;
-        z-index:3;
-        text-align:center;
-        max-width: 900px;
-        padding: 0 1rem;
-      }
-      .brand {
-        font-size: clamp(28px, 6.5vw, 64px);
-        font-weight:800;
-        margin:0 0 .08rem 0;
-        color: var(--text);
-      }
-      .tag {
-        font-size: clamp(14px, 2.5vw, 20px);
-        color: var(--muted);
-        margin: 0 0 1rem 0;
-      }
-      .mission {
-        color: var(--muted);
-        max-width:60ch;
-        margin: 0 auto;
-        font-size: clamp(14px, 2vw, 18px);
-        line-height:1.6;
-      }
+    /* MIDDLE TRAIL SECTION */
+    #trail-section{
+      position:relative;
+      width:100%;
+      height:400px;
+      overflow:hidden;
+    }
+    #trail-canvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+      pointer-events:none; /* mouse events pass through */
+    }
 
-      /* Divider */
-      .divider{
-        width: min(92%, 1000px);
-        height:1px;
-        margin: 36px auto;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-      }
+    /* SERVICES SECTION */
+    .custom-section {
+      width:100%;
+      padding: clamp(40px,6vw,80px) 5%;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .section-content {
+      max-width:1000px;
+      margin:0 auto;
+      text-align:center;
+    }
+    .section-title {
+      font-size: clamp(28px,6vw,48px);
+      font-weight:800;
+      margin-bottom:1rem;
+    }
+    .section-text {
+      font-size: clamp(14px,2.2vw,20px);
+      max-width:700px;
+      margin:0 auto 2rem auto;
+      line-height:1.6;
+      color: var(--muted);
+    }
+    .services-grid {
+      display:grid;
+      gap:2rem;
+      grid-template-columns:1fr;
+      margin-top:2rem;
+    }
+    .service-card {
+      background: rgba(255,255,255,0.03);
+      padding:20px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.06);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .service-card:hover {
+      transform: translateY(-5px);
+      box-shadow:0 8px 24px rgba(0,0,0,0.35);
+    }
+    .service-card h3 {
+      margin-top:0;
+      margin-bottom:0.5rem;
+      font-size: clamp(18px,3vw,24px);
+      font-weight:700;
+    }
+    .service-card p {
+      margin:0;
+      font-size: clamp(14px,1.8vw,16px);
+      color:#c0d0ea;
+    }
+    @media(min-width:720px){
+      .services-grid{ grid-template-columns: repeat(3,1fr); }
+    }
 
-      /* SERVICES SECTION */
-      .custom-section {
-        width: 100%;
-        padding: clamp(40px, 6vw, 80px) 5%;
-        background: var(--bg);
-        color: var(--text);
-      }
-      .section-content {
-        max-width: 1000px;
-        margin: 0 auto;
-        text-align: center;
-      }
-      .section-title {
-        font-size: clamp(28px, 6vw, 48px);
-        font-weight: 800;
-        margin-bottom: 1rem;
-      }
-      .section-text {
-        font-size: clamp(14px, 2.2vw, 20px);
-        max-width: 700px;
-        margin: 0 auto 2rem auto;
-        line-height: 1.6;
-        color: var(--muted);
-      }
-      .services-grid {
-        display: grid;
-        gap: 2rem;
-        grid-template-columns: 1fr;
-        margin-top: 2rem;
-      }
-      .service-card {
-        background: rgba(255,255,255,0.03);
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.06);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-      }
-      .service-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-      }
-      .service-card h3 {
-        margin-top:0;
-        margin-bottom:0.5rem;
-        font-size: clamp(18px, 3vw, 24px);
-        font-weight:700;
-      }
-      .service-card p {
-        margin:0;
-        font-size: clamp(14px, 1.8vw, 16px);
-        color:#c0d0ea;
-      }
+    /* CONTACT SECTION */
+    .contact-wrap{
+      width: min(92%,1000px);
+      margin:0 auto 80px;
+      padding: clamp(20px,4vw,40px);
+      background: rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:14px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.28);
+      backdrop-filter: blur(6px);
+    }
+    .contact-wrap h2{ margin:0 0 .5rem 0; font-size: clamp(20px,3.2vw,28px); }
+    .contact-wrap p.lead { color: var(--muted); margin:0 0 1rem 0; }
+    form { display:grid; gap:12px; }
+    input, textarea{
+      padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.02); color: var(--text); outline:none;
+    }
+    textarea{ min-height:120px; resize:vertical; }
+    button{
+      padding:12px 16px; border-radius:10px; border:none;
+      background: var(--accent); color:#041017; font-weight:700; cursor:pointer;
+    }
+    @media(min-width:720px){
+      form{ grid-template-columns:1fr 1fr; }
+      textarea{ grid-column:1/-1; }
+      button{ grid-column:1/-1; justify-self:start; min-width:180px; }
+    }
+  </style>
+</head>
+<body>
 
-      @media(min-width:720px){
-        .services-grid{ grid-template-columns: repeat(3,1fr); }
-      }
+<!-- HERO / TANK -->
+<section id="tank" class="tank" aria-label="Interactive water tank">
+  <canvas id="water" aria-hidden="true"></canvas>
+  <div class="tank-content" aria-label="Brand intro">
+    <h1 class="brand">BrandRapid</h1>
+    <h2 class="tag">Marketing</h2>
+    <p class="mission">
+      BrandRapid is a forward-thinking digital marketing agency that elevates brands using innovative advertising solutions, committed to driving growth and engagement for every client.
+    </p>
+  </div>
+</section>
 
-      /* CONTACT SECTION */
-      .contact-wrap{
-        width: min(92%, 1000px);
-        margin: 0 auto 80px;
-        padding: clamp(20px, 4vw, 40px);
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.06);
-        border-radius: 14px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.28);
-        backdrop-filter: blur(6px);
-      }
-      .contact-wrap h2{ margin:0 0 .5rem 0; font-size: clamp(20px, 3.2vw, 28px); }
-      .contact-wrap p.lead { color: var(--muted); margin:0 0 1rem 0; }
+<!-- Divider -->
+<div class="divider" role="separator" aria-hidden="true"></div>
 
-      form { display:grid; gap:12px; }
-      input, textarea{
-        padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08);
-        background: rgba(255,255,255,0.02); color: var(--text); outline:none;
-      }
-      textarea{ min-height:120px; resize:vertical; }
-      button{
-        padding:12px 16px; border-radius:10px; border:none;
-        background: var(--accent); color: #041017; font-weight:700; cursor:pointer;
-      }
-      @media(min-width:720px){
-        form{ grid-template-columns: 1fr 1fr; }
-        textarea{ grid-column: 1 / -1; }
-        button{ grid-column: 1 / -1; justify-self: start; min-width: 180px; }
-      }
-    </style>
-  </head>
-  <body>
-    <!-- HERO / TANK -->
-    <section id="tank" class="tank" aria-label="Interactive water tank">
-      <canvas id="water" aria-hidden="true"></canvas>
-      <div class="tank-content" aria-label="Brand intro">
-        <h1 class="brand">BrandRapid</h1>
-        <h2 class="tag">Marketing</h2>
-        <p class="mission">
-          BrandRapid is a forward-thinking digital marketing agency that elevates brands using innovative advertising solutions, committed to driving growth and engagement for every client.
-        </p>
+<!-- MIDDLE TRAIL SECTION -->
+<section id="trail-section">
+  <canvas id="trail-canvas" aria-hidden="true"></canvas>
+</section>
+
+<!-- SERVICES SECTION -->
+<section class="custom-section">
+  <div class="section-content">
+    <h2 class="section-title">Our Services</h2>
+    <p class="section-text">
+      At BrandRapid, we offer a full suite of digital marketing solutions, 
+      including brand strategy, social media campaigns, SEO optimization, 
+      and creative content development — all designed to elevate your brand.
+    </p>
+    <div class="services-grid">
+      <div class="service-card">
+        <h3>Strategy</h3>
+        <p>Tailored marketing plans to grow your audience and engagement.</p>
       </div>
-    </section>
-
-    <!-- Divider -->
-    <div class="divider" role="separator" aria-hidden="true"></div>
-
-    <!-- SERVICES SECTION -->
-    <section class="custom-section">
-      <div class="section-content">
-        <h2 class="section-title">Our Services</h2>
-        <p class="section-text">
-          At BrandRapid, we offer a full suite of digital marketing solutions, 
-          including brand strategy, social media campaigns, SEO optimization, 
-          and creative content development — all designed to elevate your brand.
-        </p>
-        <div class="services-grid">
-          <div class="service-card">
-            <h3>Strategy</h3>
-            <p>Tailored marketing plans to grow your audience and engagement.</p>
-          </div>
-          <div class="service-card">
-            <h3>Content</h3>
-            <p>Creative, bold content that resonates with your audience.</p>
-          </div>
-          <div class="service-card">
-            <h3>Analytics</h3>
-            <p>Track performance and optimize campaigns for maximum ROI.</p>
-          </div>
-        </div>
+      <div class="service-card">
+        <h3>Content</h3>
+        <p>Creative, bold content that resonates with your audience.</p>
       </div>
-    </section>
+      <div class="service-card">
+        <h3>Analytics</h3>
+        <p>Track performance and optimize campaigns for maximum ROI.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-    <!-- CONTACT (Netlify form) -->
-    <section class="contact-wrap" id="contact">
-      <h2>Contact Us</h2>
-      <p class="lead">We’d love to hear from you. Fill out the form and we’ll get back to you shortly.</p>
-      <form name="contact" method="POST" data-netlify="true">
-        <input type="hidden" name="form-name" value="contact" />
-        <input name="name" type="text" placeholder="Your Name" required />
-        <input name="email" type="email" placeholder="Your Email" required />
-        <textarea name="message" placeholder="Your Message" required></textarea>
-        <button type="submit">Send Message</button>
-      </form>
-    </section>
+<!-- CONTACT SECTION -->
+<section class="contact-wrap" id="contact">
+  <h2>Contact Us</h2>
+  <p class="lead">We’d love to hear from you. Fill out the form and we’ll get back to you shortly.</p>
+  <form name="contact" method="POST" data-netlify="true">
+    <input type="hidden" name="form-name" value="contact" />
+    <input name="name" type="text" placeholder="Your Name" required />
+    <input name="email" type="email" placeholder="Your Email" required />
+    <textarea name="message" placeholder="Your Message" required></textarea>
+    <button type="submit">Send Message</button>
+  </form>
+</section>
 
-    <!-- Integrated Water + Bubbles Animation -->
-    <script>
-      (function(){
-        const canvas = document.getElementById('water');
-        const ctx = canvas.getContext('2d', { alpha: true });
-        const tank = document.getElementById('tank');
-        let DPR = Math.max(1, window.devicePixelRatio || 1);
-        let W=0,H=0,last=performance.now(),time=0;
-        const baseFill = 0.25;
-        let mouseX=null,mouseInside=false,particles=[],bubbles=[];
+<!-- Scripts -->
+<script>
+(function(){
+  // HERO WATER + BUBBLES (existing)
+  const canvas = document.getElementById('water');
+  const ctx = canvas.getContext('2d', { alpha: true });
+  const tank = document.getElementById('tank');
+  let DPR = Math.max(1, window.devicePixelRatio || 1);
+  let W=0,H=0,last=performance.now(),time=0;
+  const baseFill = 0.25;
+  let mouseX=null,mouseInside=false,particles=[],bubbles=[];
 
-        function resize(){
-          const rect = tank.getBoundingClientRect();
-          W=Math.max(320, Math.floor(rect.width));
-          H=Math.max(260, Math.floor(rect.height));
-          canvas.width = Math.floor(W*DPR);
-          canvas.height = Math.floor(H*DPR);
-          canvas.style.width=W+'px';
-          canvas.style.height=H+'px';
-          ctx.setTransform(DPR,0,0,DPR,0,0);
-        }
+  function resize(){
+    const rect = tank.getBoundingClientRect();
+    W=Math.max(320, Math.floor(rect.width));
+    H=Math.max(260, Math.floor(rect.height));
+    canvas.width = Math.floor(W*DPR);
+    canvas.height = Math.floor(H*DPR);
+    canvas.style.width=W+'px';
+    canvas.style.height=H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
 
-        function waveY(xNorm,t){
-          const waterLevel = 1 - baseFill;
-          let y = waterLevel + 0.02*Math.sin(xNorm*2*Math.PI + t*0.8) + 0.012*Math.sin(xNorm*3.8*Math.PI - t*1.1);
-          if(mouseInside && mouseX!=null){
-            const mx=mouseX/W, d=xNorm-mx, sigma=0.08;
-            y -= Math.exp(-(d*d)/(2*sigma*sigma))*0.04*Math.sin(t*3.2);
-          }
-          return y;
-        }
+  function waveY(xNorm,t){
+    const waterLevel = 1 - baseFill;
+    let y = waterLevel + 0.02*Math.sin(xNorm*2*Math.PI + t*0.8) + 0.012*Math.sin(xNorm*3.8*Math.PI - t*1.1);
+    if(mouseInside && mouseX!=null){
+      const mx=mouseX/W, d=xNorm-mx, sigma=0.08;
+      y -= Math.exp(-(d*d)/(2*sigma*sigma))*0.04*Math.sin(t*3.2);
+    }
+    return y;
+  }
 
-        function createParticle(x,y){
-          const angle = (Math.random()*Math.PI)-Math.PI/2-0.25;
-          const speed = 1.6+Math.random()*2.4;
-          const vx=Math.cos(angle)*speed;
-          const vy=Math.sin(angle)*speed*-1.0;
-          const life=700+Math.random()*700;
-          const size=1.5+Math.random()*3.5;
-          particles.push({x,y,vx,vy,life,born:performance.now(),size,alpha:1});
-        }
+  function createParticle(x,y){
+    const angle = (Math.random()*Math.PI)-Math.PI/2-0.25;
+    const speed = 1.6+Math.random()*2.4;
+    const vx=Math.cos(angle)*speed;
+    const vy=Math.sin(angle)*speed*-1.0;
+    const life=700+Math.random()*700;
+    const size=1.5+Math.random()*3.5;
+    particles.push({x,y,vx,vy,life,born:performance.now(),size,alpha:1});
+  }
 
-        function triggerSplash(clientX,clientY){
-          const rect = tank.getBoundingClientRect();
-          const x=clientX-rect.left;
-          const y=clientY-rect.top;
-          const count=8+Math.floor(Math.random()*10);
-          for(let i=0;i<count;i++) createParticle(x,y);
-          mouseX=x; mouseInside=true;
-          setTimeout(()=>{mouseInside=false; mouseX=null;},600);
-        }
+  function triggerSplash(clientX,clientY){
+    const rect = tank.getBoundingClientRect();
+    const x=clientX-rect.left;
+    const y=clientY-rect.top;
+    for(let i=0;i<20;i++) createParticle(x,y);
+  }
 
-        function createBubble(){
-          const x = Math.random()*W;
-          const y = H*(1-baseFill) + Math.random()*H*baseFill*0.8; // bottom 1/4
-          const radius = 2+Math.random()*4;
-          const speed = 0.3+Math.random()*0.6;
-          const sway = (Math.random()*0.3)-0.15;
-          bubbles.push({x,y,radius,speed,sway,alpha:0.6+Math.random()*0.2});
-        }
+  function createBubble(){
+    const x=Math.random()*W, y=H, radius=2+Math.random()*4, speed=0.3+Math.random()*0.8, sway=(Math.random()-0.5)*0.5, alpha=0.5+Math.random()*0.4;
+    bubbles.push({x,y,radius,speed,sway,alpha});
+  }
 
-        function draw(now){
-          const dt=now-last; last=now; time=now*0.001;
-          ctx.clearRect(0,0,W,H);
+  function draw(){
+    const now = performance.now();
+    const dt = now-last;
+    last=now;
+    time+=dt*0.002;
 
-          // Water
-          const steps=Math.max(120,Math.floor(W/6));
-          ctx.beginPath();
-          for(let i=0;i<=steps;i++){
-            const x=(i/steps)*W;
-            const y=waveY(i/steps,time)*H;
-            if(i===0) ctx.moveTo(x,y);
-            else ctx.lineTo(x,y);
-          }
-          ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
-          const g = ctx.createLinearGradient(0,H*0.4,0,H);
-          g.addColorStop(0,'rgba(56,189,248,0.86)');
-          g.addColorStop(0.6,'rgba(14,165,233,0.88)');
-          g.addColorStop(1,'rgba(2,132,199,0.95)');
-          ctx.fillStyle=g; ctx.fill();
+    ctx.clearRect(0,0,W,H);
 
-          ctx.save(); ctx.globalAlpha=0.18; ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=1.2;
-          ctx.beginPath();
-          for(let i=0;i<=steps;i++){
-            const x=(i/steps)*W;
-            const y=(waveY(i/steps,time)-0.006)*H;
-            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-          }
-          ctx.stroke(); ctx.restore();
+    const steps=180;
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'rgba(2,132,199,0.88)');
+    g.addColorStop(1,'rgba(2,132,199,0.95)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
 
-          const nowMs=performance.now();
+    ctx.save(); ctx.globalAlpha=0.18; ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=1.2;
+    ctx.beginPath();
+    for(let i=0;i<=steps;i++){
+      const x=(i/steps)*W;
+      const y=(waveY(i/steps,time)-0.006)*H;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke(); ctx.restore();
 
-          // Particles
-          for(let i=particles.length-1;i>=0;i--){
-            const p=particles[i];
-            const age=nowMs-p.born;
-            if(age>=p.life || p.alpha<=0.02){ particles.splice(i,1); continue; }
-            p.vy+=0.045*(dt/16); p.x+=p.vx*(dt/16)*0.9; p.y+=p.vy*(dt/16)*0.9;
-            p.alpha=1-(age/p.life);
-            ctx.save(); ctx.globalAlpha=p.alpha; ctx.fillStyle='rgba(255,255,255,0.95)';
-            ctx.beginPath(); ctx.ellipse(p.x,p.y,p.size,p.size*0.7,0,0,Math.PI*2); ctx.fill(); ctx.restore();
-          }
+    const nowMs=performance.now();
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i];
+      const age=nowMs-p.born;
+      if(age>=p.life || p.alpha<=0.02){ particles.splice(i,1); continue; }
+      p.vy+=0.045*(dt/16); p.x+=p.vx*(dt/16)*0.9; p.y+=p.vy*(dt/16)*0.9;
+      p.alpha=1-(age/p.life);
+      ctx.save(); ctx.globalAlpha=p.alpha; ctx.fillStyle='rgba(255,255,255,0.95)';
+      ctx.beginPath(); ctx.ellipse(p.x,p.y,p.size,p.size*0.7,0,0,Math.PI*2); ctx.fill(); ctx.restore();
+    }
 
-          // Bubbles
-          if(bubbles.length<35 && Math.random()<0.03) createBubble();
-          for(let i=bubbles.length-1;i>=0;i--){
-            const b=bubbles[i];
-            b.y -= b.speed*(dt/16);
-            b.x += b.sway*(dt/16);
-            b.alpha -= 0.0005*(dt/16);
-            if(b.y<0 || b.alpha<=0){ bubbles.splice(i,1); continue; }
-            ctx.save(); ctx.globalAlpha=b.alpha; ctx.fillStyle='rgba(255,255,255,0.35)';
-            ctx.beginPath(); ctx.arc(b.x,b.y,b.radius,0,Math.PI*2); ctx.fill(); ctx.restore();
-          }
+    if(bubbles.length<35 && Math.random()<0.03) createBubble();
+    for(let i=bubbles.length-1;i>=0;i--){
+      const b=bubbles[i];
+      b.y -= b.speed*(dt/16);
+      b.x += b.sway*(dt/16);
+      b.alpha -= 0.0005*(dt/16);
+      if(b.y<0 || b.alpha<=0){ bubbles.splice(i,1); continue; }
+      ctx.save(); ctx.globalAlpha=b.alpha; ctx.fillStyle='rgba(255,255,255,0.35)';
+      ctx.beginPath(); ctx.arc(b.x,b.y,b.radius,0,Math.PI*2); ctx.fill(); ctx.restore();
+    }
 
-          requestAnimationFrame(draw);
-        }
+    requestAnimationFrame(draw);
+  }
 
-        function onPointerMove(e){
-          const rect = tank.getBoundingClientRect();
-          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-          mouseX = clientX - rect.left; mouseInside=true;
-        }
-        function onPointerEnter(){ mouseInside=true; }
-        function onPointerLeave(){ mouseInside=false; mouseX=null; }
-        function onPointerDown(e){
-          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-          triggerSplash(clientX, clientY);
-        }
+  function onPointerMove(e){
+    const rect = tank.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    mouseX = clientX - rect.left; mouseInside=true;
+  }
+  function onPointerEnter(){ mouseInside=true; }
+  function onPointerLeave(){ mouseInside=false; mouseX=null; }
+  function onPointerDown(e){
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    triggerSplash(clientX, clientY);
+  }
 
-        tank.addEventListener('mousemove',onPointerMove,{passive:true});
-        tank.addEventListener('touchmove',onPointerMove,{passive:true});
-        tank.addEventListener('mouseenter',onPointerEnter,{passive:true});
-        tank.addEventListener('mouseleave',onPointerLeave,{passive:true});
-        tank.addEventListener('mousedown',onPointerDown,{passive:true});
-        tank.addEventListener('touchstart',onPointerDown,{passive:true});
-        window.addEventListener('resize',resize,{passive:true});
+  tank.addEventListener('mousemove',onPointerMove,{passive:true});
+  tank.addEventListener('touchmove',onPointerMove,{passive:true});
+  tank.addEventListener('mouseenter',onPointerEnter,{passive:true});
+  tank.addEventListener('mouseleave',onPointerLeave,{passive:true});
+  tank.addEventListener('mousedown',onPointerDown,{passive:true});
+  tank.addEventListener('touchstart',onPointerDown,{passive:true});
+  window.addEventListener('resize',resize,{passive:true});
+  resize();
+  requestAnimationFrame(draw);
 
-        resize(); requestAnimationFrame(draw);
-      })();
-    </script>
-  </body>
+  // MOUSE TRAIL SECTION
+  const trailCanvas = document.getElementById('trail-canvas');
+  const tCtx = trailCanvas.getContext('2d');
+  let tW=0,tH=0;
+  let tParticles=[];
+  const trailEmojis=['💰','📈','📊','📣','🤩','🎉','🌟'];
+
+  function trailResize(){
+    tW=trailCanvas.clientWidth;
+    tH=trailCanvas.clientHeight;
+    trailCanvas.width=tW*DPR;
+    trailCanvas.height=tH*DPR;
+    tCtx.setTransform(DPR,0,0,DPR,0,0);
+  }
+
+  function trailCreateParticle(x,y){
+    const emoji = trailEmojis[Math.floor(Math.random()*trailEmojis.length)];
+    const vx=(Math.random()-0.5)*2;
+    const vy=-2-Math.random()*1;
+    const life=60+Math.random()*30;
+    tParticles.push({x,y,vx,vy,emoji,life,alpha:1});
+  }
+
+  function trailDraw(){
+    tCtx.clearRect(0,0,tW,tH);
+    for(let i=tParticles.length-1;i>=0;i--){
+      const p=tParticles[i];
+      p.x+=p.vx; p.y+=p.vy; p.life--;
+      p.alpha=p.life/80;
+      tCtx.globalAlpha=p.alpha;
+      tCtx.font='24px sans-serif';
+      tCtx.fillText(p.emoji,p.x,p.y);
+      if(p.life<=0) tParticles.splice(i,1);
+    }
+    requestAnimationFrame(trailDraw);
+  }
+
+  trailCanvas.addEventListener('mousemove',e=>{
+    const rect=trailCanvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left;
+    const my=e.clientY-rect.top;
+    trailCreateParticle(mx,my);
+  });
+
+  window.addEventListener('resize',trailResize);
+  trailResize();
+  trailDraw();
+
+})();
+</script>
+
+</body>
 </html>

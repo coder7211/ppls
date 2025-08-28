@@ -76,8 +76,8 @@
       .custom-section {
         width: 100%;
         padding: clamp(40px, 6vw, 80px) 5%;
-        background: #041017;
-        color: #e6eef6;
+        background: var(--bg); /* matches body */
+        color: var(--text);
       }
       .section-content {
         max-width: 1000px;
@@ -94,7 +94,7 @@
         max-width: 700px;
         margin: 0 auto 2rem auto;
         line-height: 1.6;
-        color: #9fb0c8;
+        color: var(--muted);
       }
       .services-grid {
         display: grid;
@@ -124,6 +124,7 @@
         font-size: clamp(14px, 1.8vw, 16px);
         color:#c0d0ea;
       }
+
       @media(min-width:720px){
         .services-grid{ grid-template-columns: repeat(3,1fr); }
       }
@@ -175,7 +176,7 @@
     <!-- Divider -->
     <div class="divider" role="separator" aria-hidden="true"></div>
 
-    <!-- NEW SERVICES SECTION -->
+    <!-- SERVICES SECTION -->
     <section class="custom-section">
       <div class="section-content">
         <h2 class="section-title">Our Services</h2>

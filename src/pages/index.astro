@@ -1,10 +1,9 @@
 ---
---- 
+---
 <!-- index.astro
-     Reactive water tank with:
-       - mouse/touch ripples & splash particles on click/tap
-       - custom "wave" cursor when hovering the tank (desktop)
-     Safe to paste as a full replacement for your existing page.
+     Full hero "tank" with reactive water + click/tap splash particles.
+     No custom cursor code — default cursor preserved.
+     Safe to paste as full replacement of your current page.
 -->
 
 <html lang="en">
@@ -25,7 +24,7 @@
         -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
       }
 
-      /* Tank area */
+      /* TANK (HERO) */
       .tank {
         position: relative;
         width:100%;
@@ -43,9 +42,10 @@
         width:100%;
         height:100%;
         z-index:1;
+        display:block;
       }
 
-      /* Overlay text */
+      /* Text overlay above water */
       .tank-content {
         position:relative;
         z-index:3;
@@ -56,7 +56,7 @@
       .brand {
         font-size: clamp(28px, 6.5vw, 64px);
         font-weight:800;
-        margin:0 0 .1rem 0;
+        margin:0 0 .08rem 0;
         color: var(--text);
       }
       .tag {
@@ -72,7 +72,17 @@
         line-height:1.6;
       }
 
-      /* divider */
+      /* subtle frame / glow */
+      .tank::before, .tank::after{
+        content:"";
+        position:absolute;
+        left:0; right:0;
+        pointer-events:none;
+      }
+      .tank::before{ top:0; height:10px; background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0)); }
+      .tank::after{ bottom:0; height:10px; background: linear-gradient(0deg, rgba(255,255,255,0.06), rgba(255,255,255,0)); }
+
+      /* Divider */
       .divider{
         width: min(92%, 1000px);
         height:1px;
@@ -80,7 +90,7 @@
         background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
       }
 
-      /* Contact card */
+      /* CONTACT CARD */
       .contact-wrap{
         width: min(92%, 1000px);
         margin: 0 auto 80px;
@@ -88,7 +98,7 @@
         background: rgba(255,255,255,0.03);
         border: 1px solid rgba(255,255,255,0.06);
         border-radius: 14px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.28);
         backdrop-filter: blur(6px);
       }
       .contact-wrap h2{ margin:0 0 .5rem 0; font-size: clamp(20px, 3.2vw, 28px); }
@@ -105,21 +115,18 @@
         background: var(--accent); color: #041017; font-weight:700; cursor:pointer;
       }
 
-      /* Custom cursor: data-URI SVG wave (fallback pointer) */
-      .tank.custom-cursor {
-        cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'><path fill='%23111' d='M2 12c3-3 5-3 8 0 3-3 5-3 8 0v8H2z' opacity='0.95'/></svg>") 12 12, auto;
-      }
-
-      /* On small devices the cursor change is irrelevant; no harm */
-      @media (max-width:720px){
-        .tank.custom-cursor { cursor: auto; }
+      /* Responsive form layout on wider screens */
+      @media (min-width: 720px){
+        form{ grid-template-columns: 1fr 1fr; }
+        textarea{ grid-column: 1 / -1; }
+        button{ grid-column: 1 / -1; justify-self: start; min-width: 180px; }
       }
     </style>
   </head>
 
   <body>
     <!-- HERO / TANK -->
-    <section id="tank" class="tank">
+    <section id="tank" class="tank" aria-label="Interactive water tank">
       <canvas id="water" aria-hidden="true"></canvas>
 
       <div class="tank-content" aria-label="Brand intro">
@@ -148,57 +155,45 @@
     </section>
 
     <script>
-      // ===== Water canvas with click/tap splash + custom cursor activation =====
+      // ===== Water canvas with click/tap splash + particles (no custom cursor) =====
       (function(){
         const canvas = document.getElementById('water');
         const ctx = canvas.getContext('2d', { alpha: true });
 
         const tank = document.getElementById('tank');
-        // enable custom cursor class on desktop
-        function enableCursor() {
-          tank.classList.add('custom-cursor');
-        }
-        function disableCursor() {
-          tank.classList.remove('custom-cursor');
-        }
-        // Enable cursor on pointer-capable devices
-        if(window.matchMedia('(hover: hover) and (pointer: fine)').matches){
-          enableCursor();
-        }
 
         let DPR = Math.max(1, window.devicePixelRatio || 1);
         let W = 0, H = 0;
+        let last = performance.now();
         let time = 0;
 
-        // Wave params
-        const baseFill = 0.25; // fraction of tank height filled (25%)
-        let mouseX = null, mouseY = null, mouseInside = false;
-
-        // Splash particles list
+        // Wave / water settings
+        const baseFill = 0.25; // bottom 25% filled
+        let mouseX = null;
+        let mouseInside = false;
         const particles = [];
 
-        // Resize canvas to match tank size
+        // Resize canvas to tank size
         function resize(){
           const rect = tank.getBoundingClientRect();
           W = Math.max(320, Math.floor(rect.width));
           H = Math.max(260, Math.floor(rect.height));
-          canvas.width = Math.floor(W * DPR);
+          canvas.width  = Math.floor(W * DPR);
           canvas.height = Math.floor(H * DPR);
-          canvas.style.width = W + 'px';
+          canvas.style.width  = W + 'px';
           canvas.style.height = H + 'px';
           ctx.setTransform(DPR,0,0,DPR,0,0);
         }
 
-        // simple wave function with time and optional local bump
+        // Wave surface function
         function waveY(xNorm, t){
           const waterLevel = 1 - baseFill;
-          // layered sine waves
           const y =
             waterLevel
             + 0.02 * Math.sin(xNorm * Math.PI * 2.0 + t * 0.8)
             + 0.012 * Math.sin(xNorm * Math.PI * 3.8 - t * 1.1);
 
-          // mouse bump
+          // local bump when clicking (gaussian)
           if(mouseInside && mouseX != null){
             const mx = mouseX / W;
             const d = xNorm - mx;
@@ -210,39 +205,32 @@
           return y;
         }
 
-        // Particle constructor for splash droplets
+        // Particle for splash droplets
         function createParticle(x, y){
-          // x,y are canvas (pixel) coords
-          const angle = (Math.random() * Math.PI) - Math.PI/2 - 0.3; // upward bias
-          const speed = 1.8 + Math.random() * 2.2;
+          const angle = (Math.random() * Math.PI) - Math.PI/2 - 0.25;
+          const speed = 1.6 + Math.random() * 2.4;
           const vx = Math.cos(angle) * speed;
-          const vy = Math.sin(angle) * speed * -1.0; // negative to go up
-          const life = 800 + Math.random()*500; // ms
-          const size = 2 + Math.random()*3;
-          particles.push({x, y, vx, vy, life, born: performance.now(), size, alpha:1});
+          const vy = Math.sin(angle) * speed * -1.0;
+          const life = 700 + Math.random()*700;
+          const size = 1.5 + Math.random()*3.5;
+          particles.push({ x, y, vx, vy, life, born: performance.now(), size, alpha: 1 });
         }
 
-        // Trigger splash: ripples + particles
+        // Trigger splash (ripples handled via mouse bump + particles)
         function triggerSplash(clientX, clientY){
           const rect = tank.getBoundingClientRect();
-          // local coords
           const x = clientX - rect.left;
           const y = clientY - rect.top;
-          // create multiple particles
-          const count = 8 + Math.floor(Math.random()*8);
-          for(let i=0;i<count;i++){
-            createParticle(x, y);
-          }
+          const count = 8 + Math.floor(Math.random() * 10);
+          for(let i=0;i<count;i++) createParticle(x, y);
 
-          // Minor temporary bump (we model it by setting mouseX & a short timeout)
+          // brief bump influence on waves
           mouseX = x;
           mouseInside = true;
-          // clear bump after 600ms to let wave settle
           setTimeout(()=> { mouseInside = false; mouseX = null; }, 600);
         }
 
-        // Animation loop
-        let last = performance.now();
+        // Main draw loop
         function draw(now){
           const dt = now - last;
           last = now;
@@ -250,7 +238,7 @@
 
           ctx.clearRect(0,0,W,H);
 
-          // Build top surface path
+          // surface path (top edge of water)
           ctx.beginPath();
           const steps = Math.max(120, Math.floor(W / 6));
           for(let i=0;i<=steps;i++){
@@ -260,12 +248,11 @@
             if(i===0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
-          // close and fill bottom area
           ctx.lineTo(W, H);
           ctx.lineTo(0, H);
           ctx.closePath();
 
-          // gradient
+          // fill gradient
           const g = ctx.createLinearGradient(0, H*0.4, 0, H);
           g.addColorStop(0, 'rgba(56,189,248,0.86)');
           g.addColorStop(0.6, 'rgba(14,165,233,0.88)');
@@ -273,7 +260,7 @@
           ctx.fillStyle = g;
           ctx.fill();
 
-          // sheen stroke
+          // light sheen stroke
           ctx.save();
           ctx.globalAlpha = 0.18;
           ctx.strokeStyle = 'rgba(255,255,255,0.9)';
@@ -289,7 +276,7 @@
           ctx.stroke();
           ctx.restore();
 
-          // update + draw particles
+          // update & draw particles (droplets)
           const nowMs = performance.now();
           for(let i = particles.length -1; i >= 0; i--){
             const p = particles[i];
@@ -298,19 +285,18 @@
               particles.splice(i,1);
               continue;
             }
-            // simple physics
-            // gravity affects vy
-            p.vy += 0.045 * (dt/16); 
-            p.x += p.vx * (dt/16) * 0.8;
-            p.y += p.vy * (dt/16) * 0.8;
-            // fade
+            // physics
+            p.vy += 0.045 * (dt/16);
+            p.x += p.vx * (dt/16) * 0.9;
+            p.y += p.vy * (dt/16) * 0.9;
             p.alpha = 1 - (age / p.life);
-            // draw
+
+            // draw droplet
             ctx.save();
             ctx.globalAlpha = p.alpha;
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
             ctx.beginPath();
-            ctx.ellipse(p.x, p.y, p.size, p.size*0.8, 0, 0, Math.PI*2);
+            ctx.ellipse(p.x, p.y, p.size, p.size*0.7, 0, 0, Math.PI*2);
             ctx.fill();
             ctx.restore();
           }
@@ -318,12 +304,11 @@
           requestAnimationFrame(draw);
         }
 
-        // Input handlers
+        // Pointer handlers
         function onPointerMove(e){
           const rect = tank.getBoundingClientRect();
           const clientX = e.touches ? e.touches[0].clientX : e.clientX;
           mouseX = clientX - rect.left;
-          // we keep mouseInside true while moving inside
           mouseInside = true;
         }
         function onPointerEnter(){ mouseInside = true; }
@@ -335,22 +320,17 @@
           triggerSplash(clientX, clientY);
         }
 
-        // Wire events
+        // events
         tank.addEventListener('mousemove', onPointerMove, { passive:true });
         tank.addEventListener('touchmove', onPointerMove, { passive:true });
         tank.addEventListener('mouseenter', onPointerEnter, { passive:true });
         tank.addEventListener('mouseleave', onPointerLeave, { passive:true });
-
-        // click / tap -> splash
         tank.addEventListener('mousedown', onPointerDown, { passive:true });
-        tank.addEventListener('touchstart', function(e){
-          // use first touch point
-          onPointerDown(e);
-        }, { passive:true });
+        tank.addEventListener('touchstart', function(e){ onPointerDown(e); }, { passive:true });
 
         window.addEventListener('resize', resize, { passive:true });
 
-        // Init
+        // init
         resize();
         requestAnimationFrame(draw);
       })();
